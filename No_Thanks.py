@@ -1,4 +1,5 @@
 import random
+import matplotlib as plt
 
 # 1. Deck
 # ----------------------------------------------------------------------------
@@ -13,14 +14,15 @@ class Deck(object):
     def __init__(self):
         self.deck = []
         
-    def build(self):
+    def build(self, verbose):
         cards_all = range(3,36)
         deck = random.sample(cards_all, 24)
         
         for card in deck:
             self.deck.append(card)
         
-        print("The deck has been shuffled.")
+        if verbose:
+            print("The deck has been shuffled.")
             
     def draw(self):
         return self.deck.pop()
@@ -44,15 +46,17 @@ class Player(object):
         self.card_hand = list()
         self.chip_hand = 11
         
-    def draw_card(self, deck, player):
+    def draw_card(self, deck, player, verbose):
         global card_pool
+        global turn_no
         
         card_pool = deck.draw()
-        print(f'{self.name} draws the number ' + str(card_pool) + ".")
+        if verbose:
+            print(f'{self.name} draws the number ' + str(card_pool) + ".")
         
-        player.weighted_play(player, deck)
+        player.player_strat(player, deck, turn_no, verbose)
     
-    def take_card(self, player, deck):
+    def take_card(self, player, deck, verbose):
         global card_pool
         global chip_pool
         global game_end
@@ -60,17 +64,18 @@ class Player(object):
         self.card_hand.append(card_pool)
         self.chip_hand += chip_pool
         
-        print(f'{self.name} takes the ' + str(card_pool) + " and " + str(chip_pool) + " chips.")
-        print(f'{self.name} has ' + str(self.chip_hand) + ' chips remaining.')
+        if verbose:
+            print(f'{self.name} takes the ' + str(card_pool) + " and " + str(chip_pool) + " chips.")
+            print(f'{self.name} has ' + str(self.chip_hand) + ' chips remaining.')
         
         chip_pool = 0
         
         if not deck.check_end():
-            player.draw_card(deck, player)
+            player.draw_card(deck, player, verbose)
         else:
             game_end = True
         
-    def pass_card(self):
+    def pass_card(self, verbose):
         
         global card_pool
         global chip_pool
@@ -78,26 +83,39 @@ class Player(object):
         self.chip_hand -= 1
         chip_pool += 1
         
-        print(f'{self.name} passes the ' + str(card_pool) + " and loses a chip.")
-        print(f'{self.name} has ' + str(self.chip_hand) + ' chips remaining.')
+        if verbose:
+            print(f'{self.name} passes the ' + str(card_pool) + " and loses a chip.")
+            print(f'{self.name} has ' + str(self.chip_hand) + ' chips remaining.')
+     
+    def player_strat(self, player, deck, turn_no, verbose):
         
-    def rand_play(self, player, deck):
+        if turn_no % 3 == 1:
+            player.weighted_play(player, deck, verbose)
+            
+        if turn_no % 3 == 2:
+            player.weighted_play(player, deck, verbose)
+            
+        if turn_no % 3 == 0:
+            player.weighted_play(player, deck, verbose)
+
+        
+    def rand_play(self, player, deck, verbose):
         """
         Action is randomly determined. Note that players must take a card if
         they are out of chips.
         """
         global chip_pool
-        decision = random.randint(0,1)
+        decision = random.randint(0,10)
         
         
         if self.chip_hand == 0:
             decision == 0
         
         if decision == 0:
-            player.take_card(player, deck)
+            player.take_card(player, deck, verbose)
             
-        if decision == 1:
-            player.pass_card()
+        else:
+            player.pass_card(verbose)
             
     def remove_runs(player_hand):
         player_hand.sort()
@@ -122,10 +140,10 @@ class Player(object):
     def chip_weight(chip_count):
         # Linear function mx + c such that chip_weight = 1 when chip_count = 1
         # and chip_weight = 3 when chip_count = 11
-        return 0.2*chip_count + 0.8
+        return 0.2 * chip_count + 0.8
         
     
-    def weighted_play(self, player, deck):
+    def weighted_play(self, player, deck, verbose):
         global card_pool
         global chip_pool
         
@@ -141,10 +159,10 @@ class Player(object):
         
         
         if take_value <= pass_value or self.chip_hand <=0:
-            player.take_card(player, deck)
+            player.take_card(player, deck, verbose)
             
         else:
-            player.pass_card()
+            player.pass_card(verbose)
             
         
         
@@ -155,7 +173,7 @@ class Player(object):
 # 3. Game
 # ----------------------------------------------------------------------------
 
-def Run_Game(player_1, player_2, player_3):
+def Run_Game(player_1, player_2, player_3, verbose=False):
     """
     A game reflects an iteration of turns, until the deck emtpies and total
     points are tallied. Winner is then determined. Initialised with three
@@ -167,8 +185,8 @@ def Run_Game(player_1, player_2, player_3):
     Player_3 = Player(player_3)
 
     deck = Deck()
-    deck.build()
-    turn_no = 1
+    deck.build(verbose)
+    global turn_no
     global card_pool
     global chip_pool 
     global game_end
@@ -176,6 +194,7 @@ def Run_Game(player_1, player_2, player_3):
     Global used as card_pool and chip_pool need to be updated each turn so
     cannot be reset between function calls.
     """
+    turn_no = 1
     card_pool = 0
     chip_pool = 0
     game_end = False
@@ -183,44 +202,60 @@ def Run_Game(player_1, player_2, player_3):
     if random_start:
         turn_no = random.randint(1, 3)
         if turn_no == 1:
-            Player_1.draw_card(deck, Player_1)
+            Player_1.draw_card(deck, Player_1, verbose)
         elif turn_no == 2:
-            Player_2.draw_card(deck, Player_2)
+            Player_2.draw_card(deck, Player_2, verbose)
         elif turn_no == 3:
-            Player_3.draw_card(deck, Player_3)
+            Player_3.draw_card(deck, Player_3, verbose)
     
     else:
         turn_no = 1
-        Player_1.draw_card(deck, Player_1)
+        Player_1.draw_card(deck, Player_1, verbose)
     
     while not game_end:
         turn_no += 1
         
         if turn_no % 3 == 1:
-            Player_1.weighted_play(Player_1, deck)
+            Player_1.player_strat(Player_1, deck, turn_no, verbose)
             
         if turn_no % 3 == 2:
-            Player_2.weighted_play(Player_2, deck)
+            Player_2.player_strat(Player_2, deck, turn_no, verbose)
             
         if turn_no % 3 == 0:
-            Player_3.weighted_play(Player_3, deck)
+            Player_3.player_strat(Player_3, deck, turn_no, verbose)
             
     else:
         P1_total = Player_1.point_tally()
         P2_total = Player_2.point_tally()
         P3_total = Player_3.point_tally()
         
-        print(f'{Player_1.name} has a final score of ' + str(P1_total))
-        print(f'{Player_2.name} has a final score of ' + str(P2_total))
-        print(f'{Player_3.name} has a final score of ' + str(P3_total))
+        if verbose:
+            print(f'{Player_1.name} has a final score of ' + str(P1_total))
+            print(f'{Player_2.name} has a final score of ' + str(P2_total))
+            print(f'{Player_3.name} has a final score of ' + str(P3_total))
         
         if min(P1_total, P2_total, P3_total) == P1_total:
-            print(f'{Player_1.name} has won!!!')
+            if verbose:
+                print(f'{Player_1.name} has won!!!')
+            return 1
             
         elif min(P1_total, P2_total, P3_total) == P2_total:
-             print(f'{Player_2.name} has won!!!')
+            if verbose: 
+                print(f'{Player_2.name} has won!!!')
+            return 0
          
         elif min(P1_total, P2_total, P3_total) == P3_total:
-             print(f'{Player_3.name} has won!!!')
-            
-Run_Game('Alice', 'Bob', 'Claire')  
+            if verbose:
+                print(f'{Player_3.name} has won!!!')
+            return 0
+
+'''
+weighted_win_proportion = 0            
+for i in range(0, 10000):
+    weighted_win_proportion += Run_Game('Alice', 'Bob', 'Charlie')
+
+weighted_win_proportion /= 100
+print('Alice won '+str(weighted_win_proportion)+'% of the  time.')
+'''
+
+Run_Game('Alice', 'Bob', 'Charlie', True)
