@@ -93,10 +93,10 @@ class Player(object):
             player.weighted_play(player, deck, verbose)
             
         if turn_no % 3 == 2:
-            player.weighted_play(player, deck, verbose)
+            player.rand_play(player, deck, verbose)
             
         if turn_no % 3 == 0:
-            player.weighted_play(player, deck, verbose)
+            player.rand_play(player, deck, verbose)
 
         
     def rand_play(self, player, deck, verbose):
@@ -107,10 +107,9 @@ class Player(object):
         global chip_pool
         decision = random.randint(0,10)
         
-        
         if self.chip_hand == 0:
-            decision == 0
-        
+            decision = 0
+
         if decision == 0:
             player.take_card(player, deck, verbose)
             
@@ -152,7 +151,7 @@ class Player(object):
         pass_card_hand = Player.remove_runs(self.card_hand)
         pass_chip_hand = self.chip_hand - 1
         
-        take_value = sum(take_card_hand) - (Player.chip_weight(take_chip_hand) / 2) * take_chip_hand
+        take_value = sum(take_card_hand) - (Player.chip_weight(take_chip_hand)/2) * take_chip_hand
         pass_value = sum(pass_card_hand) - Player.chip_weight(pass_chip_hand) * pass_chip_hand
         
         # print('take_value is '+str(take_value)+' and pass_value is '+str(pass_value))
@@ -249,13 +248,14 @@ def Run_Game(player_1, player_2, player_3, verbose=False):
                 print(f'{Player_3.name} has won!!!')
             return 0
 
-'''
+
+
 weighted_win_proportion = 0            
 for i in range(0, 10000):
     weighted_win_proportion += Run_Game('Alice', 'Bob', 'Charlie')
 
 weighted_win_proportion /= 100
 print('Alice won '+str(weighted_win_proportion)+'% of the  time.')
-'''
 
-Run_Game('Alice', 'Bob', 'Charlie', True)
+
+#Run_Game('Alice', 'Bob', 'Charlie', True)
