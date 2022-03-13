@@ -105,7 +105,7 @@ class Player(object):
         they are out of chips.
         """
         global chip_pool
-        decision = random.randint(0,10)
+        decision = random.randint(0,3)
         
         if self.chip_hand == 0:
             decision = 0
